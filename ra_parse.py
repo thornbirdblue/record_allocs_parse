@@ -28,32 +28,86 @@ import sys,os,re,string,time,datetime
 
 SW_VERSION='0.1'
 
-DefaultFile='record_alloc.txt'
+DefaultFile='record_allocs.txt'
 
 # log var
 debugLog = 0
 debugLogLevel=(0,1,2,3) # 0:no log; 1:op logic; 2:op; 3:verbose
 
 # record_allocs.txt format
-ra_format={
-	'malloc':'(\d+): \w+ (\w+) (\d+)',
-	'realloc':'(\d+): \w+ (\w+) \w+ (\d+)',
-	'free':'(\d+): (\w+)',
-	'calloc':'(\d+): \w+ (\w+) (\d+) (\d+)',
-	'memalign':'(\d+): \w+ (\w+) (\d+) (\d+)',
-}
+class Allocs:
+	__alloc_name=('malloc','realloc','calloc','memalign','free')
+	__ra_format={
+		alloc_name[0]:'(\d+): \w+ (\w+) (\d+)',
+		alloc_name[1]:'(\d+): \w+ (\w+) \w+ (\d+)',
+		alloc_name[3]:'(\d+): \w+ (\w+) (\d+) (\d+)',
+		alloc_name[4]:'(\d+): \w+ (\w+) \d+ (\d+)',
+		alloc_name[2]:'(\d+): (\w+)',
+	}
 
-def tag_parse(line):
-	alloc_rg='\d+: (\w+)'
-	
-	m = re.match(alloc_rg,line)
-	if m:
-		if debugLog >= debugLogLevel[-1]:
-			print('Find: '+line)
+	__tid_allocs=__tid_frees={}
+
+	__allocs_count=__allocs_size={
+		alloc_name[0]:0,
+		alloc_name[1]:0,
+		alloc_name[2]:0,
+		alloc_name[3]:0,
+		alloc_name[4]:0,
+	}
+
+	__allocs_point={}
+
+	def __alloc_add(tag,m):
+		if tag == 'calloc':
+			size = int(m.group(3))*int(m.group(4))
+		else
+			size = int(m.group(3))
 		
 		if debugLog >= debugLogLevel[2]:
-			print('Tag: '+m.group(1))
+			print('Alloc: ',size)
 	
+	def __alloc_sub(tag,m):
+		if debugLog >= debugLogLevel[2]:
+			print('Free: ',m.group(2))
+
+	def statistic_count(self,tag):
+		self.__	allocs_count[tag]+=1
+
+		if debugLog >= debugLogLevel[2]:
+			print(tag+' Count: ',self.__allocs_count[tag])
+
+	def parse_alloc_line(self,tag,line):
+		rg=ra_format[tag]
+	
+		if debugLog >= debugLogLevel[2]:
+			print('Tag Format: '+rg)
+
+		m=re.match(rg,line)
+		if m:
+			if debugLog >= debugLogLevel[1]:
+				print('Tag Format: '+rg)
+
+			if tag in self.__alloc_name[0:-2]:
+				self.__alloc_add(tag,m)
+			else:
+				self.__alloc_sub(tag,m)
+
+	def tag_parse(self,line):
+		alloc_rg='\d+: (\w+)'
+	
+		m = re.match(alloc_rg,line)
+		if m:
+			if debugLog >= debugLogLevel[-1]:
+				print('Find: '+line)
+		
+			if debugLog >= debugLogLevel[2]:
+				print('Tag: '+m.group(1))
+			
+			return m.group(1)
+		else:
+			return None
+	
+Allocs sta
 
 def parse_file(f):
 	while 1:
@@ -63,7 +117,12 @@ def parse_file(f):
 			print("Finish Parse File!")
 			break
 		
-		tag = tag_parse(line)
+		tag = sta.tag_parse(line)
+
+		if tag is not None:
+			sta.statistic_count(tag)
+			
+			sta.parse_alloc_line(tag,line)
 
 
 def main():
