@@ -36,60 +36,59 @@ debugLogLevel=(0,1,2,3) # 0:no log; 1:op logic; 2:op; 3:verbose
 
 # record_allocs.txt format
 class Allocs:
-	__alloc_name=('malloc','realloc','calloc','memalign','free')
+	__alloc_name=('malloc','realloc','calloc','memalign','free','thread_done')
 	__ra_format={
-		alloc_name[0]:'(\d+): \w+ (\w+) (\d+)',
-		alloc_name[1]:'(\d+): \w+ (\w+) \w+ (\d+)',
-		alloc_name[3]:'(\d+): \w+ (\w+) (\d+) (\d+)',
-		alloc_name[4]:'(\d+): \w+ (\w+) \d+ (\d+)',
-		alloc_name[2]:'(\d+): (\w+)',
+		__alloc_name[0]:'(\d+): \w+ (\w+) (\d+)',
+		__alloc_name[1]:'(\d+): \w+ (\w+) \w+ (\d+)',
+		__alloc_name[2]:'(\d+): \w+ (\w+) (\d+) (\d+)',
+		__alloc_name[3]:'(\d+): \w+ (\w+) \d+ (\d+)',
+		__alloc_name[4]:'(\d+): \w+ (\w+)',
+		__alloc_name[5]:'(\d+): \w+',
 	}
 
 	__tid_allocs=__tid_frees={}
 
 	__allocs_count=__allocs_size={
-		alloc_name[0]:0,
-		alloc_name[1]:0,
-		alloc_name[2]:0,
-		alloc_name[3]:0,
-		alloc_name[4]:0,
+		__alloc_name[0]:0,
+		__alloc_name[1]:0,
+		__alloc_name[2]:0,
+		__alloc_name[3]:0,
+		__alloc_name[4]:0,
+		__alloc_name[5]:0,
 	}
 
 	__allocs_point={}
 
-	def __alloc_add(tag,m):
+	def __alloc_add(self,tag,m):
 		if tag == 'calloc':
 			size = int(m.group(3))*int(m.group(4))
-		else
+		else:
 			size = int(m.group(3))
 		
 		if debugLog >= debugLogLevel[2]:
 			print('Alloc: ',size)
 	
-	def __alloc_sub(tag,m):
+	def __alloc_sub(self,tag,m):
 		if debugLog >= debugLogLevel[2]:
 			print('Free: ',m.group(2))
 
 	def statistic_count(self,tag):
-		self.__	allocs_count[tag]+=1
+		self.__allocs_count[tag]+=1
 
 		if debugLog >= debugLogLevel[2]:
 			print(tag+' Count: ',self.__allocs_count[tag])
 
 	def parse_alloc_line(self,tag,line):
-		rg=ra_format[tag]
+		rg=__ra_format[tag]
 	
-		if debugLog >= debugLogLevel[2]:
+		if debugLog >= debugLogLevel[-1]:
 			print('Tag Format: '+rg)
 
 		m=re.match(rg,line)
 		if m:
-			if debugLog >= debugLogLevel[1]:
-				print('Tag Format: '+rg)
-
-			if tag in self.__alloc_name[0:-2]:
+			if tag in self.__alloc_name[0:-3]:
 				self.__alloc_add(tag,m)
-			else:
+			elif tag == 'free':
 				self.__alloc_sub(tag,m)
 
 	def tag_parse(self,line):
@@ -107,7 +106,7 @@ class Allocs:
 		else:
 			return None
 	
-Allocs sta
+sta = Allocs()
 
 def parse_file(f):
 	while 1:
