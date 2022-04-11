@@ -69,7 +69,7 @@ class Allocs:
 		elif tag == 'realloc':
 			old_point = m.group(3)
 			if old_point == '0x0':
-				print(m.group(0))
+				print('realloc old point is 0x0: '+m.group(0))
 
 			size = int(m.group(4))
 		else:
@@ -80,7 +80,7 @@ class Allocs:
 		
 		self.__allocs_size[tag] += size
 		
-		if debugLog >= debugLogLevel[2]:
+		if debugLog >= debugLogLevel[-2]:
 			print('Total Alloc: ',self.__allocs_size[tag])
 		
 		cur_point = m.group(2)
@@ -95,20 +95,23 @@ class Allocs:
 			self.__tid_allocs[tid] = size	
 	
 	def __alloc_sub(self,tag,m):
-		if debugLog >= debugLogLevel[2]:
-			print('Tid: ',m.group(1),' Free: ',m.group(2),'Size: 'self.__allocs_point[m.group[2]])
+		tid = m.group(1)
+		cur_point = m.group(2)
+
+		if debugLog >= debugLogLevel[-2]:
+			print('Tid: ',tid,' Free: ',cur_point,'Size: 'self.__allocs_point[cur_point])
 
 		if tid in self.__tid_frees:
-			self.__tid_frees[tid] += self.__allocs_point[m.group[2]]
+			self.__tid_frees[tid] += self.__allocs_point[cur_point]
 		else:
-			self.__tid_frees[tid] = self.__allocs_point[m.group[2]]
+			self.__tid_frees[tid] = self.__allocs_point[cur_point]
 		
-		self.__allocs_point[m.group(2)] = 0
+		self.__allocs_point[cur_point] = 0
 
 	def statistic_count(self,tag):
 		self.__allocs_count[tag]+=1
 
-		if debugLog >= debugLogLevel[2]:
+		if debugLog >= debugLogLevel[-2]:
 			print(tag+' Count: ',self.__allocs_count[tag])
 
 	def parse_alloc_line(self,tag,line):
@@ -119,7 +122,7 @@ class Allocs:
 
 		m=re.match(rg,line)
 		if m:
-			if tag in self.__alloc_name[0:-3]:
+			if tag in self.__alloc_name[0:-2]:
 				self.__alloc_add(tag,m)
 			elif tag == 'free':
 				self.__alloc_sub(tag,m)
@@ -132,7 +135,7 @@ class Allocs:
 			if debugLog >= debugLogLevel[-1]:
 				print('Find: '+line)
 		
-			if debugLog >= debugLogLevel[2]:
+			if debugLog >= debugLogLevel[-2]:
 				print('Tag: '+m.group(1))
 			
 			return m.group(1)
@@ -140,11 +143,14 @@ class Allocs:
 			return None
 
 	def output_info(self):
+		df = pd.DataFrame(self.__allocs_count)
+		print('Total Alloc Count:\n',df.T)		
+
 		df = pd.DataFrame(self.__allocs_size)
-		print('Total Alloc Size:\n',df)		
+		print('Total Alloc Size:\n',df.T)		
 		
 		df = pd.DataFrame(self.__tid_allocs)
-		print('Tid Alloc:\n',df)		
+		print('Tid Alloc:\n',df.T)		
 	
 sta = Allocs()
 
