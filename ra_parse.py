@@ -63,6 +63,7 @@ class Allocs:
 
 	def __alloc_add(self,tag,m):
 		tid = m.group(1)
+		old_point = ''
 
 		if tag == 'calloc':
 			size = int(m.group(3))*int(m.group(4))
@@ -99,7 +100,7 @@ class Allocs:
 		cur_point = m.group(2)
 
 		if debugLog >= debugLogLevel[-2]:
-			print('Tid: ',tid,' Free: ',cur_point,'Size: 'self.__allocs_point[cur_point])
+			print('Tid: ',tid,' Free: ',cur_point,'Size: ',self.__allocs_point[cur_point])
 
 		if tid in self.__tid_frees:
 			self.__tid_frees[tid] += self.__allocs_point[cur_point]
@@ -143,14 +144,22 @@ class Allocs:
 			return None
 
 	def output_info(self):
-		df = pd.DataFrame(self.__allocs_count)
-		print('Total Alloc Count:\n',df.T)		
+		df = pd.DataFrame(self.__allocs_count,index=[0])
+		print('\nTotal Alloc Count:\n',df.T)		
 
-		df = pd.DataFrame(self.__allocs_size)
-		print('Total Alloc Size:\n',df.T)		
+		df = pd.DataFrame(self.__allocs_size,index=[0])
+		print('\nTotal Alloc Size:\n',df.T)		
 		
-		df = pd.DataFrame(self.__tid_allocs)
-		print('Tid Alloc:\n',df.T)		
+		df = pd.DataFrame(self.__tid_allocs,index=[0])
+		print('\nTid Alloc:\n',df.T)
+	
+		df.T.to_excel("Tid_Allocs.xlsx")		
+		
+		df = pd.DataFrame(self.__allocs_point,index=[0])
+		print('\nAlloc Point:\n',df.T)		
+		
+		print('\nAlloc Sum:\n',df.T.sum())
+		df.T.to_excel("Allocs.xlsx")		
 	
 sta = Allocs()
 
